@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testcontainers-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: testcontainers-example
+  template:
+    metadata:
+      labels:
+        app: testcontainers-example
+    spec:
+      containers:
+        - name: app
+          image: ${OKTETO_BUILD_APP_IMAGE}
+          # The app prints a greeting and exits; keep the pod running so it is not restarted.
+          command: ["sh", "-c", "java -cp 'app.jar:lib/*' example.HelloWorld && sleep infinity"]

@@ -1,0 +1,5 @@
+name: dind
+
+deploy:
+  - kubectl apply -f dind.yml
+  - kubectl rollout status deployment/dind --timeout=300s

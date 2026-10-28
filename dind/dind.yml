@@ -1,0 +1,62 @@
+# Docker daemon used by Testcontainers. Deployed once, in a namespace shared by the team.
+# The Service is headless so "dind" resolves to the pod IP: Testcontainers publishes
+# random ports on the daemon and needs to reach all of them, not only 2375.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dind-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dind
+spec:
+  replicas: 1
+  # The volume is ReadWriteOnce: the old pod must release it before the new one starts.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dind
+  template:
+    metadata:
+      labels:
+        app: dind
+    spec:
+      containers:
+        - name: dind
+          image: docker:27-dind
+          args: ["--tls=false"]
+          securityContext:
+            privileged: true
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          readinessProbe:
+            exec:
+              command: ["docker", "info"]
+            periodSeconds: 5
+          volumeMounts:
+            - name: docker-data
+              mountPath: /var/lib/docker
+      volumes:
+        - name: docker-data
+          persistentVolumeClaim:
+            claimName: dind-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dind
+spec:
+  clusterIP: None
+  selector:
+    app: dind
+  ports:
+    - name: docker
+      port: 2375
