@@ -1,7 +1,7 @@
 # Builds the project the same way a normal CI job would: compile + run the test suite.
 #
 # Testcontainers needs a Docker daemon. Its config (testcontainers.properties, pointing to
-# the shared dind service) is mounted as a build secret, so it never ends up in the image.
+# the dind service in the namespace) is mounted as a build secret, so it never ends up in the image.
 FROM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /src

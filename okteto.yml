@@ -1,5 +1,13 @@
 name: testcontainers-example
 
+# Docker daemon for Testcontainers, deployed in this namespace before the build.
+dependencies:
+  dind:
+    repository: https://github.com/okteto-community/testcontainers-example
+    manifest: dind/okteto.yml
+    branch: main
+    wait: true
+
 build:
   # Compiles and runs the tests. Testcontainers reads its config from the secret below.
   app:
