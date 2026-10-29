@@ -15,6 +15,7 @@ okteto test unit
 ```
 
 > Tests can't use bind mounts (`.withFileSystemBind(...)`): the Docker daemon runs in another pod
-> and doesn't see the test files. Use `.withCopyFileToContainer(...)` instead.
+> and doesn't see the test files. Use `.withCopyFileToContainer(...)` instead, as in
+> [`HelloWorldSpec.scala`](src/test/scala/example/HelloWorldSpec.scala).
 
 For tests inside the build, see the [`main`](https://github.com/okteto-community/testcontainers-example) branch.
