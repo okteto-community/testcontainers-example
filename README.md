@@ -15,7 +15,8 @@ okteto build --no-cache
 ```
 
 > Tests can't use bind mounts (`.withFileSystemBind(...)`): the Docker daemon runs in another pod
-> and doesn't see the test files. Use `.withCopyFileToContainer(...)` instead.
+> and doesn't see the test files. Use `.withCopyFileToContainer(...)` instead, as in
+> [`HelloWorldSpec.scala`](src/test/scala/example/HelloWorldSpec.scala).
 
 For tests decoupled from the build (`okteto test`), see the
 [`tests-decoupled`](https://github.com/okteto-community/testcontainers-example/tree/tests-decoupled) branch.
