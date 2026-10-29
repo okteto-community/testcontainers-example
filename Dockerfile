@@ -1,15 +1,12 @@
-# Builds the project the same way a normal CI job would: compile + run the test suite.
-#
-# Testcontainers needs a Docker daemon. Its config (testcontainers.properties, pointing to
-# the shared dind service) is mounted as a build secret, so it never ends up in the image.
+# Compiles the project (main and test classes) without running the tests.
+# The `build` stage is also published as the `builder` image, where `okteto test` runs the tests.
 FROM maven:3.9-eclipse-temurin-21 AS build
 
 WORKDIR /src
 COPY pom.xml .
 COPY src ./src
 
-RUN --mount=type=secret,id=testcontainers,target=/root/.testcontainers.properties \
-    mvn -B package
+RUN mvn -B package -DskipTests
 
 # Minimal runtime stage, only here so the build produces a usable image.
 FROM eclipse-temurin:21-jre

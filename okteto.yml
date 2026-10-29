@@ -1,0 +1,28 @@
+name: testcontainers-example
+
+# Docker daemon for Testcontainers, deployed in this namespace.
+dependencies:
+  dind:
+    repository: https://github.com/okteto-community/testcontainers-example
+    manifest: dind/okteto.yml
+    branch: main
+    wait: true
+
+build:
+  app:
+    dockerfile: Dockerfile
+  # Same build, stopped at the stage with the compiled classes. Used to run the tests.
+  builder:
+    dockerfile: Dockerfile
+    target: build
+
+deploy:
+  - envsubst < k8s.yml | kubectl apply -f -
+
+test:
+  unit:
+    image: ${OKTETO_BUILD_BUILDER_IMAGE}
+    commands:
+      - printf "docker.host=tcp\\://dind.${OKTETO_NAMESPACE}\\:2375\n" > ~/.testcontainers.properties
+      # Runs only the tests, on the classes already compiled in the builder image.
+      - cd /src && mvn -B scalatest:test

@@ -1,33 +1,20 @@
-# Testcontainers on Okteto
+# Testcontainers on Okteto: tests decoupled from the build
 
-## Option A: tests decoupled from the build
+The image is built without running the tests. `okteto test` runs them on the `builder` image,
+which already has the compiled classes, so the project is compiled only once.
 
-The image is built without tests (`Dockerfile.skip-tests`) and the tests run with `okteto test`,
-against a shared Docker daemon (`dind`) configured in `testcontainers.properties`.
+Testcontainers uses a Docker daemon (`dind`) deployed in the same namespace as a dependency
+(`dind/okteto.yml` in the `main` branch).
 
 ```bash
-# Shared Docker daemon (once)
-okteto namespace create testcontainers
-okteto deploy -f dind/okteto.yml -n testcontainers
-
-# Build and deploy (no tests)
-okteto deploy -f okteto.tests-decoupled.yml -n <your-namespace>
+# Deploy dind, build (no tests) and deploy the app
+okteto deploy
 
 # Run the tests
-okteto test unit -f okteto.tests-decoupled.yml -n <your-namespace>
+okteto test unit
 ```
 
-## Option B: tests inside the build
+> Tests can't use bind mounts (`.withFileSystemBind(...)`): the Docker daemon runs in another pod
+> and doesn't see the test files. Use `.withCopyFileToContainer(...)` instead.
 
-The image is built with tests (`Dockerfile`). `testcontainers.properties` is passed to the build
-as a secret and mounted in the `RUN mvn -B package` step, so Testcontainers uses the shared Docker daemon (`dind`).
-
-```bash
-# Shared Docker daemon (once)
-okteto namespace create testcontainers
-okteto deploy -f dind/okteto.yml -n testcontainers
-
-# Build (with tests) and deploy
-okteto build -f okteto.tests-in-build.yml -n <your-namespace> --no-cache
-okteto deploy -f okteto.tests-in-build.yml -n <your-namespace>
-```
+For tests inside the build, see the [`main`](https://github.com/okteto-community/testcontainers-example) branch.
