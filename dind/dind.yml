@@ -7,6 +7,10 @@ metadata:
   name: dind
 spec:
   replicas: 1
+  # Never run two daemons at once: the headless Service would resolve "dind" to both pods
+  # and Testcontainers could create a container in one and connect to the other.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: dind
