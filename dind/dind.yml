@@ -1,25 +1,12 @@
-# Docker daemon used by Testcontainers. Deployed once, in a namespace shared by the team.
+# Docker daemon used by Testcontainers, deployed as a dependency in the same namespace.
 # The Service is headless so "dind" resolves to the pod IP: Testcontainers publishes
 # random ports on the daemon and needs to reach all of them, not only 2375.
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: dind-data
-spec:
-  accessModes: ["ReadWriteOnce"]
-  resources:
-    requests:
-      storage: 20Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dind
 spec:
   replicas: 1
-  # The volume is ReadWriteOnce: the old pod must release it before the new one starts.
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: dind
@@ -45,9 +32,10 @@ spec:
             - name: docker-data
               mountPath: /var/lib/docker
       volumes:
+        # Bounded scratch space: if images and containers go over it, the pod is evicted and starts clean.
         - name: docker-data
-          persistentVolumeClaim:
-            claimName: dind-data
+          emptyDir:
+            sizeLimit: 10Gi
 ---
 apiVersion: v1
 kind: Service
