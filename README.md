@@ -1,33 +1,22 @@
-# Testcontainers on Okteto
+# Testcontainers on Okteto: tests inside the build
 
-## Option A: tests decoupled from the build
+The image is built and tested in the same `okteto build`, as in a regular CI job.
 
-The image is built without tests (`Dockerfile.skip-tests`) and the tests run with `okteto test`,
-against a shared Docker daemon (`dind`) configured in `testcontainers.properties`.
-
-```bash
-# Shared Docker daemon (once)
-okteto namespace create testcontainers
-okteto deploy -f dind/okteto.yml -n testcontainers
-
-# Build and deploy (no tests)
-okteto deploy -f okteto.tests-decoupled.yml -n <your-namespace>
-
-# Run the tests
-okteto test unit -f okteto.tests-decoupled.yml -n <your-namespace>
-```
-
-## Option B: tests inside the build
-
-The image is built with tests (`Dockerfile`). `testcontainers.properties` is passed to the build
-as a secret and mounted in the `RUN mvn -B package` step, so Testcontainers uses the shared Docker daemon (`dind`).
+Testcontainers uses a Docker daemon (`dind`) deployed in the same namespace as a dependency,
+before the build. `testcontainers.properties` points to it and is mounted as a build secret
+in the `RUN mvn -B package` step.
 
 ```bash
-# Shared Docker daemon (once)
-okteto namespace create testcontainers
-okteto deploy -f dind/okteto.yml -n testcontainers
+# Deploy dind, build (compile + tests) and deploy the app
+okteto deploy
 
-# Build (with tests) and deploy
-okteto build -f okteto.tests-in-build.yml -n <your-namespace> --no-cache
-okteto deploy -f okteto.tests-in-build.yml -n <your-namespace>
+# Build again forcing the tests to run (BuildKit skips them if the sources didn't change)
+okteto build --no-cache
 ```
+
+> Tests can't use bind mounts (`.withFileSystemBind(...)`): the Docker daemon runs in another pod
+> and doesn't see the test files. Use `.withCopyFileToContainer(...)` instead, as in
+> [`HelloWorldSpec.scala`](src/test/scala/example/HelloWorldSpec.scala).
+
+For tests decoupled from the build (`okteto test`), see the
+[`tests-decoupled`](https://github.com/okteto-community/testcontainers-example/tree/tests-decoupled) branch.
